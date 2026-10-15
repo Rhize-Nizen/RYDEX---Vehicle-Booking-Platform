@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RYDEX — Cyber-Minimalist Mobility Platform | Chhattisgarh</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Geometric Sans Typography (Inter & JetBrains Mono) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet GIS Engine -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #000000;
+            --bg-deep: #0A0A0F;
+            --surface-card: #121218;
+            --surface-glass: rgba(255, 255, 255, 0.035);
+            --surface-glass-heavy: rgba(18, 18, 24, 0.88);
+            --border-luminous: 1px solid rgba(255, 255, 255, 0.1);
+            --border-hover: 1px solid rgba(255, 255, 255, 0.24);
+            --text-primary: #FFFFFF;
+            --text-secondary: #8E8EA0;
+            --accent-indigo: #6366F1;
+            --accent-cyan: #06B6D4;
+            --accent-pink: #EC4899;
+            --accent-amber: #F59E0B;
+            --accent-emerald: #10B981;
+            --glow-indigo: 0 0 28px rgba(99, 102, 241, 0.4);
+            --glow-cyan: 0 0 24px rgba(6, 182, 212, 0.4);
+            --glow-pink: 0 0 24px rgba(236, 72, 153, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient Radial Neon Backglows */
+        .ambient-glow-1 {
+            position: fixed;
+            top: -15%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, rgba(6, 182, 212, 0.08) 45%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(40px);
+        }
+
+        .ambient-glow-2 {
+            position: fixed;
+            bottom: -20%;
+            left: 20%;
+            width: 700px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(50px);
+        }
+
+        /* ==========================================================================
+           STAGE 1: LANDING SCREEN (Guaranteed 100vh fit with bottom breathing room)
+           ========================================================================== */
+        #landing-view {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            gap: 12px;
+            height: 100vh;
+            width: 100vw;
+            padding: 14px 36px 24px;
+            background: transparent;
+            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #landing-view.hidden {
+            opacity: 0;
+            transform: scale(0.98);
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* --- TOP 1/3: HERO TITLE SECTION --- */
+        .landing-top-third {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .top-nav-bar {
+            width: 100%;
+            max-width: 1440px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cyber-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 13px;
+            background: var(--surface-glass);
+            border: var(--border-luminous);
+            border-radius: 999px;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            backdrop-filter: blur(12px);
+        }
+
+        .cyber-pill .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .glass-btn {
+            background: var(--surface-glass);
+            border: var(--border-luminous);
+            color: var(--text-primary);
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(12px);
+        }
+
+        .glass-btn:hover {
+            border: var(--border-hover);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: var(--glow-indigo);
+        }
+
+        .hero-title-wrap {
+            margin: 4px 0 2px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero-giant-title {
+            font-size: clamp(3.4rem, 6.2vw, 5.4rem);
+            font-weight: 900;
+            letter-spacing: -0.055em;
+            line-height: 0.92;
+            background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 45%, #06B6D4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 35px rgba(6, 182, 212, 0.25));
+        }
+
+        .hero-sub-tagline {
+            margin-top: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 3.2px;
+            text-transform: uppercase;
+            color: var(--accent-indigo);
+            text-shadow: 0 0 16px rgba(99, 102, 241, 0.5);
+        }
+
+        /* --- MIDDLE 1/3: SINGLE CENTER-ALIGNED BENTO CARD --- */
+        .landing-middle-third {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .unified-bento-card {
+            width: 100%;
+            background: var(--surface-glass);
+            border: var(--border-luminous);
+            border-radius: 18px;
+            padding: 16px 36px;
+            backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: border 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .unified-bento-card:hover {
+            border: var(--border-hover);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .bento-tag {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.8px;
+            color: var(--accent-cyan);
+        }
+
+        .bento-desc-title {
+            font-size: clamp(1.25rem, 1.8vw, 1.6rem);
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            color: var(--text-primary);
+            margin: 4px 0 6px;
+        }
+
+        .bento-desc-text {
+            font-size: 12.8px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .bento-feature-pills {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 32px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .bento-feature-pills span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+
+        .bento-feature-pills strong {
+            color: var(--accent-cyan);
+            font-size: 13px;
+        }
+
+        /* --- BOTTOM 1/3: 4 VEHICLE COLUMNS --- */
+        .landing-bottom-third {
+            min-height: 0;
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .fleet-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .fleet-section-title {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+        }
+
+        .fleet-columns-grid {
+            flex: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        .tier-column-card {
+            background: var(--surface-card);
+            border: var(--border-luminous);
+            border-radius: 16px;
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            height: 100%;
+        }
+
+        .tier-column-card:hover {
+            transform: translateY(-2px);
+            border: var(--border-hover);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tier-column-card.selected {
+            background: linear-gradient(160deg, rgba(99, 102, 241, 0.14) 0%, rgba(6, 182, 212, 0.06) 100%);
+            border: 1px solid var(--accent-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        .tier-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tier-emoji {
+            font-size: 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: var(--border-luminous);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tier-rate-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            padding: 3px 9px;
+            border-radius: 999px;
+        }
+
+        .tier-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-top: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .tier-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.38;
+            margin: 3px 0 4px;
+        }
+
+        .tier-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 8px;
+            font-size: 10.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .tier-column-card.selected .tier-footer span:last-child {
+            color: var(--accent-cyan);
+            font-weight: 800;
+        }
+
+        .confirm-tier-btn {
+            padding: 9px 22px;
+            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-cyan) 100%);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            box-shadow: var(--glow-indigo);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .confirm-tier-btn:hover {
+            box-shadow: var(--glow-cyan);
+            transform: translateY(-1px);
+        }
+
+        /* ==========================================================================
+           STAGE 2: MAP & COMMAND CONSOLE (3/4 Map Top + 1/4 Console Bottom)
+           ========================================================================== */
+        #booking-view {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background: var(--bg-base);
+            transition: opacity 0.4s ease;
+        }
+
+        #booking-view.hidden {
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* --- TOP 3/4: SATELLITE MAP VIEWPORT (74vh) --- */
+        #map-section {
+            height: 74vh;
+            width: 100%;
+            position: relative;
+            background: #050508;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Floating Top Navigation Over Map */
+        .map-top-hud {
+            position: absolute;
+            top: 18px;
+            left: 24px;
+            right: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .map-top-hud > * {
+            pointer-events: auto;
+        }
+
+        .hud-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-pill {
+            background: var(--surface-glass-heavy);
+            backdrop-filter: blur(16px);
+            border: var(--border-luminous);
+            padding: 9px 16px;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 12.5px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            transition: all 0.2s;
+        }
+
+        .hud-pill:hover {
+            border: var(--border-hover);
+            box-shadow: var(--glow-indigo);
+        }
+
+        .hud-tier-switcher {
+            display: flex;
+            background: var(--surface-glass-heavy);
+            backdrop-filter: blur(16px);
+            border: var(--border-luminous);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .mini-tier-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mini-tier-btn.active {
+            background: var(--accent-indigo);
+            color: #FFFFFF;
+            box-shadow: var(--glow-indigo);
+        }
+
+        /* Floating Active Dispatch Overlay Card */
+        #active-dispatch-card {
+            position: absolute;
+            top: 76px;
+            right: 24px;
+            width: 360px;
+            background: var(--surface-glass-heavy);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            box-shadow: var(--glow-cyan), 0 20px 50px rgba(0, 0, 0, 0.85);
+            border-radius: 18px;
+            padding: 20px;
+            z-index: 1000;
+            display: none;
+            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .dispatch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .status-badge {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34D399;
+            text-transform: uppercase;
+        }
+
+        .driver-eta-banner {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--accent-amber);
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .otp-box {
+            background: #000000;
+            border: 1px dashed rgba(236, 72, 153, 0.4);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .otp-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: var(--accent-pink);
+            text-shadow: var(--glow-pink);
+        }
+
+        .dispatch-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            font-size: 12.5px;
+            margin-bottom: 16px;
+        }
+
+        .dispatch-row {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+        }
+
+        .dispatch-row strong {
+            color: var(--text-primary);
+        }
+
+        .dispatch-actions {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-upi-pay {
+            padding: 10px 12px;
+            background: linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan));
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--glow-indigo);
+        }
+
+        .btn-cancel-ride {
+            padding: 10px 12px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: 10px;
+            color: #F87171;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel-ride:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        /* --- BOTTOM 1/4: LOCATION & BOOKING COMMAND DECK (26vh) --- */
+        #bottom-command-deck {
+            height: 26vh;
+            width: 100%;
+            background: var(--bg-deep);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 14px 28px;
+            display: grid;
+            grid-template-columns: 1fr 340px 1fr;
+            gap: 22px;
+            align-items: center;
+            position: relative;
+            z-index: 1001;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .location-column {
+            background: var(--surface-card);
+            border: var(--border-luminous);
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .loc-col-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .loc-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .dot-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .dot-indicator.cyan { background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); }
+        .dot-indicator.pink { background: var(--accent-pink); box-shadow: 0 0 10px var(--accent-pink); }
+
+        .pin-map-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: var(--border-luminous);
+            color: var(--text-primary);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pin-map-btn:hover, .pin-map-btn.active {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: var(--accent-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        .deck-search-input {
+            width: 100%;
+            padding: 11px 14px;
+            background: #000000;
+            border: var(--border-luminous);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 13.5px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .deck-search-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+        }
+
+        /* UPWARD Autocomplete Dropdown */
+        .upward-suggestions {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: #14141d;
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            border-radius: 12px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 99999;
+            display: none;
+            box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.95);
+        }
+
+        .suggestion-row {
+            padding: 10px 14px;
+            font-size: 12.5px;
+            color: #cbd5e1;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .suggestion-row:hover {
+            background: rgba(99, 102, 241, 0.25);
+            color: #FFFFFF;
+        }
+
+        .quick-chips-row {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-top: 2px;
+        }
+        .quick-chips-row::-webkit-scrollbar { display: none; }
+
+        .mini-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 10.5px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .mini-chip:hover {
+            color: #fff;
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.15);
+        }
+
+        /* Center Action & Telemetry Column */
+        .center-command-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            background: var(--surface-card);
+            border: var(--border-luminous);
+            border-radius: 16px;
+            padding: 12px 16px;
+        }
+
+        .telemetry-strip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            padding-bottom: 8px;
+        }
+
+        .telemetry-item {
+            text-align: center;
+        }
+
+        .telemetry-lbl {
+            font-size: 9.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+        }
+
+        .telemetry-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-top: 2px;
+        }
+
+        .telemetry-val.fare-highlight {
+            color: var(--accent-cyan);
+            font-size: 18px;
+            text-shadow: var(--glow-cyan);
+        }
+
+        .swap-circle-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: var(--border-luminous);
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .swap-circle-btn:hover {
+            background: var(--accent-indigo);
+            box-shadow: var(--glow-indigo);
+        }
+
+        .schedule-picker-bar {
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .schedule-picker-bar.active {
+            display: flex;
+        }
+
+        .schedule-input {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--accent-indigo);
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            outline: none;
+        }
+
+        .primary-dispatch-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-cyan) 55%, var(--accent-pink) 100%);
+            border: none;
+            border-radius: 11px;
+            color: #FFFFFF;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            box-shadow: var(--glow-indigo);
+            transition: all 0.25s ease;
+        }
+
+        .primary-dispatch-btn:hover {
+            box-shadow: var(--glow-cyan);
+            transform: translateY(-1px);
+        }
+
+        /* ==========================================================================
+           MODALS: UPI QR & DIGITAL BILL, RIDE HISTORY, CANCELLATION
+           ========================================================================== */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(14px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .oled-modal {
+            background: #0E0E14;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 22px;
+            width: 100%;
+            max-width: 520px;
+            padding: 26px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95), var(--glow-indigo);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .qr-invoice-grid {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 18px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .qr-box {
+            background: #FFFFFF;
+            padding: 12px;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: var(--glow-cyan);
+        }
+
+        .invoice-table {
+            width: 100%;
+            font-size: 12.5px;
+            border-collapse: collapse;
+        }
+
+        .invoice-table td {
+            padding: 5px 0;
+            color: var(--text-secondary);
+        }
+
+        .invoice-table td:last-child {
+            text-align: right;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .invoice-table tr.total-row td {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 10px;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--accent-cyan);
+        }
+
+        /* Map Alerts & Markers */
+        #map-banner {
+            position: absolute;
+            top: 72px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(18, 18, 24, 0.95);
+            border: 1px solid var(--accent-cyan);
+            box-shadow: var(--glow-cyan);
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 700;
+            z-index: 1000;
+            display: none;
+            pointer-events: none;
+        }
+
+        .custom-pin {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2.5px solid #FFFFFF;
+            cursor: grab;
+        }
+        .custom-pin.pickup { background: var(--accent-cyan); box-shadow: 0 0 16px var(--accent-cyan); }
+        .custom-pin.drop { background: var(--accent-pink); box-shadow: 0 0 16px var(--accent-pink); }
+
+        .driver-vehicle-marker {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .driver-pulse-ring {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.4);
+            animation: pulseRing 1.8s infinite ease-out;
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(0.6); opacity: 1; }
+            100% { transform: scale(1.7); opacity: 0; }
+        }
+        .driver-icon-badge {
+            position: relative;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #0f172a;
+            border: 2px solid var(--accent-amber);
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Ambient OLED Lighting -->
+<div class="ambient-glow-1"></div>
+<div class="ambient-glow-2"></div>
+
+<!-- ========================================================================
+     STAGE 1: LANDING SCREEN (Upper 1/3 Title, Middle 1/3 Centered Bento, Bottom 1/3 4 Tiers)
+     ======================================================================== -->
+<section id="landing-view">
+
+    <!-- UPPER 1/3: GIANT CENTERED TITLE -->
+    <div class="landing-top-third">
+        <div class="top-nav-bar">
+            <div class="cyber-pill">
+                <span class="pulse-dot"></span>
+                <span>CHHATTISGARH SATELLITE MOBILITY GRID • CG-07</span>
+            </div>
+            <div class="nav-actions">
+                <button class="glass-btn" onclick="openHistoryModal()">
+                    <span>📜</span> Ride History (<span id="historyCountBadge">0</span>)
+                </button>
+                <button class="glass-btn" onclick="launchMapWithSchedule()">
+                    <span>🕒</span> Schedule a Ride
+                </button>
+            </div>
+        </div>
+
+        <div class="hero-title-wrap">
+            <h1 class="hero-giant-title">RYDEX</h1>
+            <p class="hero-sub-tagline">Next-Gen Autonomous Dispatch & Geospatial Transit</p>
+        </div>
+    </div>
+
+    <!-- MIDDLE 1/3: CENTER-ALIGNED FULL-WIDTH BENTO CARD -->
+    <div class="landing-middle-third">
+        <div class="unified-bento-card">
+            <span class="bento-tag">PLATFORM ARCHITECTURE OVERVIEW</span>
+            <h2 class="bento-desc-title">Engineered for the Bhilai–Durg–Raipur Transit Corridor</h2>
+            <p class="bento-desc-text">
+                Rydex pairs a native multithreaded Java HTTP dispatch core with high-resolution satellite telemetry to deliver seamless point-to-point mobility across Chhattisgarh. Purpose-built to eliminate arbitrary offline fare bargaining and heavy third-party platform overhead, the system computes exact street-level road distances via OSRM, enforces strict state-boundary geofencing, matches the nearest CG-07 verified captain using Euclidean spatial optimization, and generates instant UPI QR codes with GST-compliant digital invoices—all with 0.0% surge multipliers.
+            </p>
+            <div class="bento-feature-pills">
+                <span><strong>✓</strong> Strict State Geofencing</span>
+                <span><strong>✓</strong> Nearest-Captain Spatial Matching</span>
+                <span><strong>✓</strong> 4-Digit OTP Handshake Security</span>
+                <span><strong>✓</strong> Instant UPI QR & Digital GST Bills</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM 1/3: 4 VEHICLE OPTIONS COLUMN-WISE -->
+    <div class="landing-bottom-third">
+        <div class="fleet-header-bar">
+            <span class="fleet-section-title">Select Vehicle Class to Initialize Satellite Console</span>
+            <button class="confirm-tier-btn" onclick="confirmTierAndOpenMap()">
+                <span id="confirmTierBtnText">Confirm Rydex Bike & Launch Map</span>
+                <span>→</span>
+            </button>
+        </div>
+
+        <div class="fleet-columns-grid">
+            <!-- Column 1: Bike -->
+            <div class="tier-column-card selected" data-tier="BIKE" onclick="selectLandingTier('BIKE', 'Rydex Bike', this)">
+                <div>
+                    <div class="tier-top-row">
+                        <div class="tier-emoji">🏍️</div>
+                        <span class="tier-rate-pill">Base ₹20 • ₹7.5/km</span>
+                    </div>
+                    <div class="tier-title">Rydex Bike</div>
+                    <p class="tier-desc">Rapid solo commuter bike built to slice through Supela, Power House, and G.E. Road traffic.</p>
+                </div>
+                <div class="tier-footer">
+                    <span>1 Passenger • Instant</span>
+                    <span>SELECTED ✓</span>
+                </div>
+            </div>
+
+            <!-- Column 2: Auto -->
+            <div class="tier-column-card" data-tier="AUTO" onclick="selectLandingTier('AUTO', 'CG Auto', this)">
+                <div>
+                    <div class="tier-top-row">
+                        <div class="tier-emoji">🛺</div>
+                        <span class="tier-rate-pill">Base ₹30 • ₹11/km</span>
+                    </div>
+                    <div class="tier-title">CG Auto</div>
+                    <p class="tier-desc">Iconic open-air 3-wheeler with regulated digital meter fares and zero haggling across sectors.</p>
+                </div>
+                <div class="tier-footer">
+                    <span>3 Passengers • Metered</span>
+                    <span>Click to Select</span>
+                </div>
+            </div>
+
+            <!-- Column 3: Car 4 Seater -->
+            <div class="tier-column-card" data-tier="CAR_4_SEATER" onclick="selectLandingTier('CAR_4_SEATER', 'Car 4 Seater', this)">
+                <div>
+                    <div class="tier-top-row">
+                        <div class="tier-emoji">🚗</div>
+                        <span class="tier-rate-pill">Base ₹50 • ₹14/km</span>
+                    </div>
+                    <div class="tier-title">Car (Cab 4 Seater)</div>
+                    <p class="tier-desc">Air-conditioned hatchback and sedan fleet for comfortable all-weather urban and campus rides.</p>
+                </div>
+                <div class="tier-footer">
+                    <span>4 Passengers • AC Cab</span>
+                    <span>Click to Select</span>
+                </div>
+            </div>
+
+            <!-- Column 4: 7 Seater -->
+            <div class="tier-column-card" data-tier="CAR_7_SEATER" onclick="selectLandingTier('CAR_7_SEATER', '7 Seater SUV', this)">
+                <div>
+                    <div class="tier-top-row">
+                        <div class="tier-emoji">🚐</div>
+                        <span class="tier-rate-pill">Base ₹80 • ₹20/km</span>
+                    </div>
+                    <div class="tier-title">7 Seater SUV</div>
+                    <p class="tier-desc">Spacious Ertiga & Innova Prime cruisers engineered for group travel, luggage, and Raipur Airport drops.</p>
+                </div>
+                <div class="tier-footer">
+                    <span>7 Passengers • Prime SUV</span>
+                    <span>Click to Select</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================================================
+     STAGE 2: MAP & COMMAND CONSOLE (Top 3/4 Map + Bottom 1/4 Pickup/Drop Deck)
+     ======================================================================== -->
+<section id="booking-view" class="hidden">
+
+    <!-- TOP 3/4: SATELLITE MAP VIEWPORT -->
+    <div id="map-section">
+        <div class="map-top-hud">
+            <div class="hud-group">
+                <button class="hud-pill" onclick="returnToLanding()">
+                    <span>←</span> Change Vehicle Screen
+                </button>
+
+                <!-- Quick Tier Switcher Pill Bar -->
+                <div class="hud-tier-switcher">
+                    <button class="mini-tier-btn active" id="hud-btn-BIKE" onclick="switchTierFromHud('BIKE')">🏍️ Bike</button>
+                    <button class="mini-tier-btn" id="hud-btn-AUTO" onclick="switchTierFromHud('AUTO')">🛺 Auto</button>
+                    <button class="mini-tier-btn" id="hud-btn-CAR_4_SEATER" onclick="switchTierFromHud('CAR_4_SEATER')">🚗 4-Seater</button>
+                    <button class="mini-tier-btn" id="hud-btn-CAR_7_SEATER" onclick="switchTierFromHud('CAR_7_SEATER')">🚐 7-Seater</button>
+                </div>
+            </div>
+
+            <div class="hud-group">
+                <button class="hud-pill" id="scheduleToggleBtn" onclick="toggleScheduleMode()">
+                    <span>🕒</span> <span id="scheduleModeLabel">Mode: Instant Ride</span>
+                </button>
+                <button class="hud-pill" onclick="openHistoryModal()">
+                    <span>📜</span> History
+                </button>
+            </div>
+        </div>
+
+        <div id="map-banner">📍 Tap inside Chhattisgarh to place pin</div>
+
+        <!-- Active Booking & Live Driver Dispatch Floating Card -->
+        <div id="active-dispatch-card">
+            <div class="dispatch-header">
+                <span style="font-size:14px; font-weight:800;" id="dispatchTitle">Ride Dispatched</span>
+                <span class="status-badge" id="dispatchStatusBadge">LIVE TRACKING</span>
+            </div>
+
+            <div class="driver-eta-banner">
+                <span>🚖</span>
+                <span id="driverStatusText">Captain is approaching pickup point...</span>
+            </div>
+
+            <div class="otp-box">
+                <span style="font-size:11px; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Verification OTP</span>
+                <span class="otp-code" id="resOtp">----</span>
+            </div>
+
+            <div class="dispatch-meta">
+                <div class="dispatch-row"><span>Booking ID</span><strong id="resBookingId">RYD-0000</strong></div>
+                <div class="dispatch-row"><span>Captain</span><strong id="resDriver">--</strong></div>
+                <div class="dispatch-row"><span>Vehicle Plate</span><strong id="resPlate">--</strong></div>
+                <div class="dispatch-row"><span>Ride Class</span><strong id="resVehicleClass">--</strong></div>
+                <div class="dispatch-row"><span>Total Fare</span><strong style="color:var(--accent-cyan); font-size:15px;">₹<span id="resFare">--</span></strong></div>
+            </div>
+
+            <div class="dispatch-actions">
+                <button class="btn-upi-pay" onclick="openUpiInvoiceModal()">💳 UPI QR & Digital Bill</button>
+                <button class="btn-cancel-ride" onclick="openCancelModal()">✕ Cancel Ride</button>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <!-- BOTTOM 1/4: PICKUP (LEFT) & DESTINATION (RIGHT) CONSOLE -->
+    <div id="bottom-command-deck">
+
+        <!-- Left Column: Pickup Point -->
+        <div class="location-column">
+            <div class="loc-col-header">
+                <span class="loc-label"><span class="dot-indicator cyan"></span> Pickup Location (Left)</span>
+                <button class="pin-map-btn" id="pinPickupBtn" onclick="togglePinMode('pickup')">📍 Pin Pickup on Map</button>
+            </div>
+            <div style="position:relative;">
+                <input type="text" id="pickupInput" class="deck-search-input" placeholder="Search pickup colony, college, sector in CG..." autocomplete="off" oninput="onCgSearch('pickup')">
+                <div id="pickupDropdown" class="upward-suggestions"></div>
+            </div>
+            <div class="quick-chips-row">
+                <span style="font-size:10px; color:var(--text-secondary); align-self:center;">Quick:</span>
+                <button class="mini-chip" onclick="setPreset('pickup', 'Supela Chowk, Bhilai', 21.2032, 81.3394)">Supela</button>
+                <button class="mini-chip" onclick="setPreset('pickup', 'Durg Junction Station', 21.1904, 81.2849)">Durg Station</button>
+                <button class="mini-chip" onclick="setPreset('pickup', 'Rungta Campus, Kohka', 21.2420, 81.3610)">Rungta</button>
+                <button class="mini-chip" onclick="setPreset('pickup', 'Civic Centre, Bhilai', 21.1895, 81.3533)">Civic Centre</button>
+                <button class="mini-chip" onclick="setPreset('pickup', 'Surya Mall, Junwani', 21.2268, 81.3090)">Surya Mall</button>
+            </div>
+        </div>
+
+        <!-- Center Column: Swap, Telemetry, Schedule Picker & Confirm CTA -->
+        <div class="center-command-col">
+            <div class="telemetry-strip">
+                <div class="telemetry-item">
+                    <div class="telemetry-lbl">Distance</div>
+                    <div class="telemetry-val" id="dispDistance">-- km</div>
+                </div>
+
+                <button class="swap-circle-btn" title="Swap Pickup & Destination" onclick="swapLocations()">⇄</button>
+
+                <div class="telemetry-item">
+                    <div class="telemetry-lbl">Est. Time</div>
+                    <div class="telemetry-val" id="dispTime">-- min</div>
+                </div>
+
+                <div class="telemetry-item">
+                    <div class="telemetry-lbl" id="activeTierLabel">Rydex Bike</div>
+                    <div class="telemetry-val fare-highlight" id="dispActiveFare">₹--</div>
+                </div>
+            </div>
+
+            <div class="schedule-picker-bar" id="schedulePickerBar">
+                <input type="datetime-local" id="scheduleDateTime" class="schedule-input">
+            </div>
+
+            <button class="primary-dispatch-btn" onclick="requestBooking()" id="mainBookBtn">
+                Confirm & Dispatch Ride
+            </button>
+        </div>
+
+        <!-- Right Column: Destination Point -->
+        <div class="location-column">
+            <div class="loc-col-header">
+                <span class="loc-label"><span class="dot-indicator pink"></span> Destination Location (Right)</span>
+                <button class="pin-map-btn" id="pinDropBtn" onclick="togglePinMode('drop')">🎯 Pin Drop on Map</button>
+            </div>
+            <div style="position:relative;">
+                <input type="text" id="dropInput" class="deck-search-input" placeholder="Search destination station, mall, airport in CG..." autocomplete="off" oninput="onCgSearch('drop')">
+                <div id="dropDropdown" class="upward-suggestions"></div>
+            </div>
+            <div class="quick-chips-row">
+                <span style="font-size:10px; color:var(--text-secondary); align-self:center;">Quick:</span>
+                <button class="mini-chip" onclick="setPreset('drop', 'Durg Junction Station', 21.1904, 81.2849)">Durg Station</button>
+                <button class="mini-chip" onclick="setPreset('drop', 'IIT Bhilai, Kutelabhata', 21.1444, 81.3000)">IIT Bhilai</button>
+                <button class="mini-chip" onclick="setPreset('drop', 'Nehru Nagar, Bhilai', 21.2291, 81.3323)">Nehru Nagar</button>
+                <button class="mini-chip" onclick="setPreset('drop', 'Sector 6 Market, Bhilai', 21.1825, 81.3410)">Sector 6</button>
+                <button class="mini-chip" onclick="setPreset('drop', 'Raipur Airport', 21.1804, 81.7388)">Raipur Airport</button>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ========================================================================
+     MODAL 1: INTERACTIVE UPI QR CODE & DIGITAL GST BILL
+     ======================================================================== -->
+<div class="modal-backdrop" id="upiInvoiceModal">
+    <div class="oled-modal">
+        <div class="modal-head">
+            <div>
+                <span class="bento-tag">Verified Tax Invoice & UPI Terminal</span>
+                <h3 style="font-size:18px; font-weight:800; margin-top:2px;">Rydex Digital Receipt</h3>
+            </div>
+            <button class="modal-close" onclick="closeModal('upiInvoiceModal')">✕</button>
+        </div>
+
+        <div class="qr-invoice-grid">
+            <div class="qr-box">
+                <img id="upiQrImage" src="" alt="UPI QR" style="width:148px; height:148px; border-radius:8px;">
+                <span style="color:#000; font-size:10px; font-weight:800; margin-top:6px; letter-spacing:0.5px;">SCAN WITH ANY UPI APP</span>
+            </div>
+
+            <div>
+                <table class="invoice-table">
+                    <tr><td>Invoice ID</td><td id="invId">RYD-0000</td></tr>
+                    <tr><td>Date & Time</td><td id="invDate">--</td></tr>
+                    <tr><td>Vehicle Tier</td><td id="invTier">--</td></tr>
+                    <tr><td>Captain & Plate</td><td id="invCaptain">--</td></tr>
+                    <tr><td>Road Distance</td><td id="invDist">-- km</td></tr>
+                    <tr><td>Base + KM Fare</td><td id="invSub">₹0.00</td></tr>
+                    <tr><td>CGST + SGST (5%)</td><td id="invTax">₹0.00</td></tr>
+                    <tr class="total-row"><td>Total Payable</td><td id="invTotal">₹0.00</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03); border:var(--border-luminous); border-radius:10px; padding:10px 14px; font-size:11.5px; color:var(--text-secondary); margin-bottom:16px;">
+            <div><strong style="color:#fff;">From:</strong> <span id="invPickup">--</span></div>
+            <div style="margin-top:4px;"><strong style="color:#fff;">To:</strong> <span id="invDrop">--</span></div>
+        </div>
+
+        <div id="paymentStatusBanner" style="display:none; background:rgba(16,185,129,0.15); border:1px solid #10B981; color:#34D399; padding:10px; border-radius:10px; text-align:center; font-size:12.5px; font-weight:700; margin-bottom:14px;">
+            ✓ UPI Payment Verified! Digital Receipt Marked as PAID.
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button class="confirm-tier-btn" style="flex:1; justify-content:center;" onclick="simulateUpiPayment()">
+                ⚡ Simulate Instant UPI Pay
+            </button>
+            <button class="glass-btn" style="flex:1; justify-content:center;" onclick="window.print()">
+                🖨️ Print / Save PDF Bill
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================
+     MODAL 2: TRIP CANCELLATION
+     ======================================================================== -->
+<div class="modal-backdrop" id="cancelModal">
+    <div class="oled-modal" style="max-width:420px;">
+        <div class="modal-head">
+            <div>
+                <span class="bento-tag" style="color:#F87171;">Abort Dispatch</span>
+                <h3 style="font-size:18px; font-weight:800;">Cancel Current Ride?</h3>
+            </div>
+            <button class="modal-close" onclick="closeModal('cancelModal')">✕</button>
+        </div>
+
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px;">
+            Please select a reason for cancelling booking <strong id="cancelBookingIdText" style="color:#fff;"></strong>:
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">
+            <label style="background:var(--surface-card); border:var(--border-luminous); padding:10px 14px; border-radius:10px; font-size:12.5px; cursor:pointer; display:flex; gap:10px;">
+                <input type="radio" name="cancelReason" value="Changed my travel plans" checked> Changed my travel plans
+            </label>
+            <label style="background:var(--surface-card); border:var(--border-luminous); padding:10px 14px; border-radius:10px; font-size:12.5px; cursor:pointer; display:flex; gap:10px;">
+                <input type="radio" name="cancelReason" value="Captain taking too long"> Captain taking too long
+            </label>
+            <label style="background:var(--surface-card); border:var(--border-luminous); padding:10px 14px; border-radius:10px; font-size:12.5px; cursor:pointer; display:flex; gap:10px;">
+                <input type="radio" name="cancelReason" value="Entered wrong pickup/drop address"> Entered wrong pickup/drop address
+            </label>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button class="btn-cancel-ride" style="flex:1; padding:12px;" onclick="confirmRideCancellation()">Confirm Cancellation</button>
+            <button class="glass-btn" style="flex:1; justify-content:center;" onclick="closeModal('cancelModal')">Keep Ride</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================
+     MODAL 3: RIDE HISTORY & SCHEDULED RIDES LEDGER
+     ======================================================================== -->
+<div class="modal-backdrop" id="historyModal">
+    <div class="oled-modal" style="max-width:620px;">
+        <div class="modal-head">
+            <div>
+                <span class="bento-tag">Local Telemetry Ledger</span>
+                <h3 style="font-size:18px; font-weight:800;">Ride History & Scheduled Trips</h3>
+            </div>
+            <button class="modal-close" onclick="closeModal('historyModal')">✕</button>
+        </div>
+
+        <div id="historyListContainer" style="display:flex; flex-direction:column; gap:10px; max-height:380px; overflow-y:auto;">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // STATE & CONFIGURATION
+    // =========================================================================
+    let map, routeLine, driverRouteLine;
+    let pickupMarker, dropMarker, driverMarker;
+    let selectedVehicle = "BIKE";
+    let selectedVehicleLabel = "Rydex Bike";
+    let pinMode = null;
+    let searchDebounce = null;
+    let currentRoadDistance = 0;
+    let currentRoadMins = 0;
+    let latestFaresMap = {};
+    let activeBookingRecord = null;
+    let driverAnimationTimer = null;
+    let isScheduleMode = false;
+
+    // Strict Chhattisgarh Bounding Coordinates
+    const CG_MIN_LAT = 17.75, CG_MAX_LAT = 24.15;
+    const CG_MIN_LNG = 80.20, CG_MAX_LNG = 84.45;
+    const CG_BOUNDS = L.latLngBounds(L.latLng(CG_MIN_LAT, CG_MIN_LNG), L.latLng(CG_MAX_LAT, CG_MAX_LNG));
+
+    let pickupCoord = null;
+    let dropCoord = null;
+
+    const localDatabase = [
+        { name: "Supela Chowk, Bhilai", lat: 21.2032, lng: 81.3394 },
+        { name: "Durg Junction Railway Station", lat: 21.1904, lng: 81.2849 },
+        { name: "Surya Treasure Island Mall, Junwani", lat: 21.2268, lng: 81.3090 },
+        { name: "Civic Centre, Sector 5, Bhilai", lat: 21.1895, lng: 81.3533 },
+        { name: "Nehru Nagar Square, Bhilai", lat: 21.2291, lng: 81.3323 },
+        { name: "Power House Railway Station, Bhilai", lat: 21.1882, lng: 81.3210 },
+        { name: "Rungta Educational Complex, Kohka", lat: 21.2420, lng: 81.3610 },
+        { name: "IIT Bhilai Campus, Kutelabhata", lat: 21.1444, lng: 81.3000 },
+        { name: "Bhilai Institute of Technology (BIT Durg)", lat: 21.1995, lng: 81.2988 },
+        { name: "Smriti Nagar, Bhilai", lat: 21.2230, lng: 81.3175 },
+        { name: "Sector 6 Market & Central Ave, Bhilai", lat: 21.1825, lng: 81.3410 },
+        { name: "Sector 9 Hospital, Bhilai", lat: 21.1780, lng: 81.3630 },
+        { name: "Padmanabhpur, Durg", lat: 21.1795, lng: 81.2820 },
+        { name: "Swami Vivekananda Airport, Raipur", lat: 21.1804, lng: 81.7388 },
+        { name: "AIIMS Raipur, Tatibandh", lat: 21.2570, lng: 81.5790 },
+        { name: "NIT Raipur, G.E. Road", lat: 21.2490, lng: 81.6050 }
+    ];
+
+    window.addEventListener("DOMContentLoaded", () => {
+        initMap();
+        updateHistoryBadge();
+        const now = new Date(Date.now() + 3600000);
+        document.getElementById("scheduleDateTime").value = now.toISOString().slice(0, 16);
+    });
+
+    // =========================================================================
+    // STAGE 1 -> STAGE 2 NAVIGATION
+    // =========================================================================
+    function selectLandingTier(tierCode, label, cardEl) {
+        selectedVehicle = tierCode;
+        selectedVehicleLabel = label;
+
+        document.querySelectorAll(".tier-column-card").forEach(c => {
+            c.classList.remove("selected");
+            c.querySelector(".tier-footer span:last-child").innerText = "Click to Select";
+        });
+
+        cardEl.classList.add("selected");
+        cardEl.querySelector(".tier-footer span:last-child").innerText = "SELECTED ✓";
+        document.getElementById("confirmTierBtnText").innerText = `Confirm ${label} & Launch Map`;
+        syncHudTierButtons();
+    }
+
+    function confirmTierAndOpenMap() {
+        document.getElementById("landing-view").classList.add("hidden");
+        document.getElementById("booking-view").classList.remove("hidden");
+        syncHudTierButtons();
+        setTimeout(() => {
+            if (map) map.invalidateSize();
+        }, 250);
+    }
+
+    function launchMapWithSchedule() {
+        if (!isScheduleMode) toggleScheduleMode();
+        confirmTierAndOpenMap();
+    }
+
+    function returnToLanding() {
+        document.getElementById("booking-view").classList.add("hidden");
+        document.getElementById("landing-view").classList.remove("hidden");
+    }
+
+    function switchTierFromHud(tierCode) {
+        const labels = {
+            BIKE: "Rydex Bike",
+            AUTO: "CG Auto",
+            CAR_4_SEATER: "Car 4 Seater",
+            CAR_7_SEATER: "7 Seater SUV"
+        };
+        selectedVehicle = tierCode;
+        selectedVehicleLabel = labels[tierCode] || tierCode;
+        syncHudTierButtons();
+        updateDisplayedActiveFare();
+    }
+
+    function syncHudTierButtons() {
+        document.querySelectorAll(".mini-tier-btn").forEach(b => b.classList.remove("active"));
+        const activeBtn = document.getElementById("hud-btn-" + selectedVehicle);
+        if (activeBtn) activeBtn.classList.add("active");
+        document.getElementById("activeTierLabel").innerText = selectedVehicleLabel;
+    }
+
+    function toggleScheduleMode() {
+        isScheduleMode = !isScheduleMode;
+        const bar = document.getElementById("schedulePickerBar");
+        const lbl = document.getElementById("scheduleModeLabel");
+        const btn = document.getElementById("mainBookBtn");
+
+        if (isScheduleMode) {
+            bar.classList.add("active");
+            lbl.innerText = "Mode: Scheduled";
+            btn.innerText = "Confirm Scheduled Ride";
+        } else {
+            bar.classList.remove("active");
+            lbl.innerText = "Mode: Instant Ride";
+            btn.innerText = "Confirm & Dispatch Ride";
+        }
+    }
+
+    // =========================================================================
+    // SATELLITE MAP & CHHATTISGARH GEOFENCING
+    // =========================================================================
+    function initMap() {
+        map = L.map("map", {
+            center: [21.2050, 81.3300],
+            zoom: 13,
+            minZoom: 9,
+            maxZoom: 19,
+            maxBounds: CG_BOUNDS,
+            maxBoundsViscosity: 1.0,
+            zoomControl: false
+        });
+
+        L.control.zoom({ position: "bottomright" }).addTo(map);
+
+        // Google Satellite Hybrid Layer
+        L.tileLayer("https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+            subdomains: ["0", "1", "2", "3"],
+            maxZoom: 20,
+            attribution: "Satellite Imagery &copy; Google"
+        }).addTo(map);
+
+        map.on("click", (e) => {
+            if (!pinMode) return;
+            const { lat, lng } = e.latlng;
+            if (!isInsideCG(lat, lng)) {
+                showBanner("⚠️ Outside Chhattisgarh Service Boundary!", true);
+                return;
+            }
+
+            if (pinMode === "pickup") {
+                pickupCoord = { lat, lng };
+                updatePickupMarker();
+                document.getElementById("pickupInput").value = `Pinned (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            } else {
+                dropCoord = { lat, lng };
+                updateDropMarker();
+                document.getElementById("dropInput").value = `Pinned (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            }
+
+            exitPinMode();
+            checkAndDrawRoute();
+        });
+    }
+
+    function isInsideCG(lat, lng) {
+        return lat >= CG_MIN_LAT && lat <= CG_MAX_LAT && lng >= CG_MIN_LNG && lng <= CG_MAX_LNG;
+    }
+
+    function showBanner(msg, isError = false) {
+        const b = document.getElementById("map-banner");
+        b.innerText = msg;
+        b.style.borderColor = isError ? "#EF4444" : "#06B6D4";
+        b.style.display = "block";
+        setTimeout(() => { b.style.display = "none"; }, 3200);
+    }
+
+    const createPinIcon = (type) => L.divIcon({
+        className: `custom-pin ${type}`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+    });
+
+    function updatePickupMarker() {
+        if (!pickupCoord) return;
+        if (!pickupMarker) {
+            pickupMarker = L.marker([pickupCoord.lat, pickupCoord.lng], { icon: createPinIcon("pickup"), draggable: true }).addTo(map);
+            pickupMarker.on("dragend", (e) => {
+                const pos = e.target.getLatLng();
+                if (!isInsideCG(pos.lat, pos.lng)) {
+                    showBanner("⚠️ Pickup must remain inside Chhattisgarh!", true);
+                    pickupMarker.setLatLng([pickupCoord.lat, pickupCoord.lng]);
+                    return;
+                }
+                pickupCoord = { lat: pos.lat, lng: pos.lng };
+                document.getElementById("pickupInput").value = `Pin (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`;
+                checkAndDrawRoute();
+            });
+        } else {
+            pickupMarker.setLatLng([pickupCoord.lat, pickupCoord.lng]);
+        }
+    }
+
+    function updateDropMarker() {
+        if (!dropCoord) return;
+        if (!dropMarker) {
+            dropMarker = L.marker([dropCoord.lat, dropCoord.lng], { icon: createPinIcon("drop"), draggable: true }).addTo(map);
+            dropMarker.on("dragend", (e) => {
+                const pos = e.target.getLatLng();
+                if (!isInsideCG(pos.lat, pos.lng)) {
+                    showBanner("⚠️ Destination must remain inside Chhattisgarh!", true);
+                    dropMarker.setLatLng([dropCoord.lat, dropCoord.lng]);
+                    return;
+                }
+                dropCoord = { lat: pos.lat, lng: pos.lng };
+                document.getElementById("dropInput").value = `Pin (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`;
+                checkAndDrawRoute();
+            });
+        } else {
+            dropMarker.setLatLng([dropCoord.lat, dropCoord.lng]);
+        }
+    }
+
+    function togglePinMode(mode) {
+        if (pinMode === mode) { exitPinMode(); return; }
+        pinMode = mode;
+        document.getElementById("pinPickupBtn").classList.toggle("active", mode === "pickup");
+        document.getElementById("pinDropBtn").classList.toggle("active", mode === "drop");
+        const b = document.getElementById("map-banner");
+        b.innerText = mode === "pickup" ? "📍 Click on Satellite Map to set Pickup" : "🎯 Click on Satellite Map to set Destination";
+        b.style.borderColor = "#06B6D4";
+        b.style.display = "block";
+        document.getElementById("map").style.cursor = "crosshair";
+    }
+
+    function exitPinMode() {
+        pinMode = null;
+        document.getElementById("pinPickupBtn").classList.remove("active");
+        document.getElementById("pinDropBtn").classList.remove("active");
+        document.getElementById("map-banner").style.display = "none";
+        document.getElementById("map").style.cursor = "";
+    }
+
+    function setPreset(type, name, lat, lng) {
+        if (type === "pickup") {
+            document.getElementById("pickupInput").value = name;
+            pickupCoord = { lat, lng };
+            updatePickupMarker();
+        } else {
+            document.getElementById("dropInput").value = name;
+            dropCoord = { lat, lng };
+            updateDropMarker();
+        }
+        checkAndDrawRoute();
+    }
+
+    function swapLocations() {
+        if (!pickupCoord && !dropCoord) return;
+        const pIn = document.getElementById("pickupInput");
+        const dIn = document.getElementById("dropInput");
+        const tVal = pIn.value; pIn.value = dIn.value; dIn.value = tVal;
+
+        const tCoord = pickupCoord ? { ...pickupCoord } : null;
+        pickupCoord = dropCoord ? { ...dropCoord } : null;
+        dropCoord = tCoord;
+
+        if (pickupCoord) updatePickupMarker();
+        if (dropCoord) updateDropMarker();
+        checkAndDrawRoute();
+    }
+
+    // =========================================================================
+    // PHOTON GEOCODING AUTOCOMPLETE (STRICT CHHATTISGARH FILTER)
+    // =========================================================================
+    function onCgSearch(type) {
+        clearTimeout(searchDebounce);
+        const query = document.getElementById(type + "Input").value.trim();
+        const dropdown = document.getElementById(type + "Dropdown");
+
+        if (query.length < 2) {
+            dropdown.style.display = "none";
+            return;
+        }
+
+        searchDebounce = setTimeout(async () => {
+            let results = localDatabase.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
+
+            try {
+                const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&bbox=${CG_MIN_LNG},${CG_MIN_LAT},${CG_MAX_LNG},${CG_MAX_LAT}&lat=21.2050&lon=81.3300&limit=12`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data && data.features) {
+                    data.features.forEach(f => {
+                        const p = f.properties;
+                        const [lng, lat] = f.geometry.coordinates;
+                        const state = (p.state || "").toLowerCase();
+                        const isOtherState = state.includes("odisha") || state.includes("orissa") ||
+                            state.includes("andhra") || (state.includes("pradesh") && !state.includes("chhattisgarh")) ||
+                            state.includes("maharashtra") || state.includes("madhya") || state.includes("jharkhand");
+
+                        if (isInsideCG(lat, lng) && !isOtherState) {
+                            const label = [p.name, p.street, p.suburb || p.district, p.city || p.locality, "Chhattisgarh"].filter(Boolean).join(", ");
+                            if (!results.some(r => r.name === label)) {
+                                results.push({ name: label, lat, lng });
+                            }
+                        }
+                    });
+                }
+            } catch (e) {}
+
+            renderSuggestions(type, results);
+        }, 180);
+    }
+
+    function renderSuggestions(type, items) {
+        const dropdown = document.getElementById(type + "Dropdown");
+        if (!items.length) {
+            dropdown.innerHTML = `<div style="padding:10px 14px; font-size:12px; color:#8E8EA0;">No matching address inside Chhattisgarh</div>`;
+            dropdown.style.display = "block";
+            return;
+        }
+
+        dropdown.innerHTML = "";
+        items.slice(0, 6).forEach(item => {
+            const div = document.createElement("div");
+            div.className = "suggestion-row";
+            div.innerHTML = `<span style="color:var(--accent-cyan);">📍</span> <span>${item.name}</span>`;
+            div.onclick = () => {
+                document.getElementById(type + "Input").value = item.name;
+                dropdown.style.display = "none";
+                if (type === "pickup") {
+                    pickupCoord = { lat: item.lat, lng: item.lng };
+                    updatePickupMarker();
+                } else {
+                    dropCoord = { lat: item.lat, lng: item.lng };
+                    updateDropMarker();
+                }
+                checkAndDrawRoute();
+            };
+            dropdown.appendChild(div);
+        });
+        dropdown.style.display = "block";
+    }
+
+    document.addEventListener("click", (e) => {
+        if (!e.target.closest(".location-column")) {
+            document.getElementById("pickupDropdown").style.display = "none";
+            document.getElementById("dropDropdown").style.display = "none";
+        }
+    });
+
+    // =========================================================================
+    // OSRM ROAD ROUTING & JAVA BACKEND FARE SYNC
+    // =========================================================================
+    function checkAndDrawRoute() {
+        if (pickupCoord && dropCoord) {
+            drawRoadRoute();
+        } else if (pickupCoord) {
+            map.panTo([pickupCoord.lat, pickupCoord.lng]);
+        } else if (dropCoord) {
+            map.panTo([dropCoord.lat, dropCoord.lng]);
+        }
+    }
+
+    async function drawRoadRoute() {
+        if (!pickupCoord || !dropCoord) return;
+        const url = `https://router.project-osrm.org/route/v1/driving/${pickupCoord.lng},${pickupCoord.lat};${dropCoord.lng},${dropCoord.lat}?overview=full&geometries=geojson`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.routes && data.routes.length > 0) {
+                const route = data.routes[0];
+                const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+
+                if (routeLine) map.removeLayer(routeLine);
+                routeLine = L.polyline(coords, { color: "#00F0FF", weight: 5, opacity: 0.95 }).addTo(map);
+                map.fitBounds(routeLine.getBounds(), { padding: [60, 60] });
+
+                currentRoadDistance = parseFloat((route.distance / 1000).toFixed(2));
+                currentRoadMins = Math.max(3, Math.round(route.duration / 60));
+
+                document.getElementById("dispDistance").innerText = currentRoadDistance + " km";
+                document.getElementById("dispTime").innerText = currentRoadMins + " min";
+
+                await fetchFaresFromJava(currentRoadDistance);
+                return;
+            }
+        } catch (e) {}
+
+        // Fallback distance calculation
+        const dLat = (dropCoord.lat - pickupCoord.lat) * 111;
+        const dLng = (dropCoord.lng - pickupCoord.lng) * 105;
+        currentRoadDistance = parseFloat(Math.sqrt(dLat * dLat + dLng * dLng).toFixed(2));
+        currentRoadMins = Math.max(5, Math.round(currentRoadDistance * 2.4));
+        document.getElementById("dispDistance").innerText = currentRoadDistance + " km";
+        document.getElementById("dispTime").innerText = currentRoadMins + " min";
+        await fetchFaresFromJava(currentRoadDistance);
+    }
+
+    async function fetchFaresFromJava(distanceKm) {
+        try {
+            const res = await fetch("/api/fares", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ distance: distanceKm })
+            });
+            latestFaresMap = await res.json();
+            updateDisplayedActiveFare();
+        } catch (err) {
+            console.error("Java server connection error:", err);
+        }
+    }
+
+    function updateDisplayedActiveFare() {
+        if (latestFaresMap && latestFaresMap[selectedVehicle]) {
+            document.getElementById("dispActiveFare").innerText = "₹" + latestFaresMap[selectedVehicle].fare;
+        }
+    }
+
+    // =========================================================================
+    // BOOKING DISPATCH, LIVE DRIVER ANIMATION & HISTORY PERSISTENCE
+    // =========================================================================
+    async function requestBooking() {
+        if (!pickupCoord || !dropCoord) {
+            showBanner("⚠️ Select both Pickup (Left) and Destination (Right) first!", true);
+            return;
+        }
+
+        const payload = {
+            type: selectedVehicle,
+            pickup: document.getElementById("pickupInput").value,
+            dropoff: document.getElementById("dropInput").value,
+            pickupLat: pickupCoord.lat,
+            pickupLng: pickupCoord.lng,
+            dropLat: dropCoord.lat,
+            dropLng: dropCoord.lng,
+            distance: currentRoadDistance
+        };
+
+        try {
+            const res = await fetch("/api/book", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            const syncedFare = (latestFaresMap[selectedVehicle] && latestFaresMap[selectedVehicle].fare)
+                ? latestFaresMap[selectedVehicle].fare
+                : data.fare;
+
+            const scheduleTimeStr = isScheduleMode ? document.getElementById("scheduleDateTime").value : null;
+
+            activeBookingRecord = {
+                bookingId: data.bookingId,
+                timestamp: new Date().toLocaleString(),
+                scheduledFor: scheduleTimeStr,
+                status: isScheduleMode ? "SCHEDULED" : "ACTIVE",
+                paid: false,
+                tierCode: selectedVehicle,
+                vehicleLabel: selectedVehicleLabel,
+                pickup: payload.pickup,
+                dropoff: payload.dropoff,
+                distanceKm: currentRoadDistance,
+                fare: syncedFare,
+                otp: data.otp,
+                driver: data.driver
+            };
+
+            saveBookingToHistory(activeBookingRecord);
+
+            // Populate Floating Dispatch Card
+            document.getElementById("active-dispatch-card").style.display = "block";
+            document.getElementById("resBookingId").innerText = activeBookingRecord.bookingId;
+            document.getElementById("resOtp").innerText = activeBookingRecord.otp;
+            document.getElementById("resDriver").innerText = `${data.driver.name} (${data.driver.phone})`;
+            document.getElementById("resPlate").innerText = data.driver.plate;
+            document.getElementById("resVehicleClass").innerText = selectedVehicleLabel;
+            document.getElementById("resFare").innerText = syncedFare;
+            document.getElementById("paymentStatusBanner").style.display = "none";
+
+            if (isScheduleMode) {
+                document.getElementById("dispatchTitle").innerText = "Ride Scheduled";
+                document.getElementById("dispatchStatusBadge").innerText = "SCHEDULED";
+                document.getElementById("driverStatusText").innerText = `Slot Reserved: ${new Date(scheduleTimeStr).toLocaleString()}`;
+            } else {
+                document.getElementById("dispatchTitle").innerText = "Ride Dispatched";
+                document.getElementById("dispatchStatusBadge").innerText = "LIVE TRACKING";
+                spawnDriverOnMap(data.driver);
+            }
+
+        } catch (err) {
+            console.error("Booking error:", err);
+        }
+    }
+
+    function getVehicleEmoji(type) {
+        return { BIKE: "🏍️", AUTO: "🛺", CAR_4_SEATER: "🚗", CAR_7_SEATER: "🚐" }[type] || "🚖";
+    }
+
+    async function spawnDriverOnMap(driverData) {
+        if (driverAnimationTimer) clearInterval(driverAnimationTimer);
+        if (driverMarker) map.removeLayer(driverMarker);
+        if (driverRouteLine) map.removeLayer(driverRouteLine);
+
+        const dLat = pickupCoord.lat + 0.0085;
+        const dLng = pickupCoord.lng - 0.0075;
+
+        const driverIcon = L.divIcon({
+            className: "driver-vehicle-marker",
+            html: `<div class="driver-pulse-ring"></div><div class="driver-icon-badge">${getVehicleEmoji(selectedVehicle)}</div>`,
+            iconSize: [44, 44],
+            iconAnchor: [22, 22]
+        });
+
+        driverMarker = L.marker([dLat, dLng], { icon: driverIcon }).addTo(map);
+
+        const driverUrl = `https://router.project-osrm.org/route/v1/driving/${dLng},${dLat};${pickupCoord.lng},${pickupCoord.lat}?overview=full&geometries=geojson`;
+        try {
+            const res = await fetch(driverUrl);
+            const rData = await res.json();
+            if (rData.routes && rData.routes.length > 0) {
+                const pathCoords = rData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                driverRouteLine = L.polyline(pathCoords, { color: "#F59E0B", weight: 4, dashArray: "8, 8", opacity: 0.95 }).addTo(map);
+
+                let step = 0;
+                const total = pathCoords.length;
+                const statusEl = document.getElementById("driverStatusText");
+
+                driverAnimationTimer = setInterval(() => {
+                    if (step < total) {
+                        driverMarker.setLatLng(pathCoords[step]);
+                        const minsLeft = Math.max(1, Math.round(((total - step) / total) * 4));
+                        statusEl.innerText = `Captain approaching pickup (~${minsLeft} min away)`;
+                        step++;
+                    } else {
+                        clearInterval(driverAnimationTimer);
+                        statusEl.innerText = "Captain has arrived at your pickup location!";
+                        driverMarker.setLatLng([pickupCoord.lat, pickupCoord.lng]);
+                    }
+                }, 550);
+            }
+        } catch (e) {}
+    }
+
+    // =========================================================================
+    // UPI QR CODE & DIGITAL GST INVOICE
+    // =========================================================================
+    function openUpiInvoiceModal(recordOverride = null) {
+        const rec = recordOverride || activeBookingRecord;
+        if (!rec) return;
+
+        const total = parseFloat(rec.fare);
+        const preTax = (total / 1.05).toFixed(2);
+        const tax = (total - preTax).toFixed(2);
+
+        document.getElementById("invId").innerText = rec.bookingId;
+        document.getElementById("invDate").innerText = rec.timestamp;
+        document.getElementById("invTier").innerText = rec.vehicleLabel;
+        document.getElementById("invCaptain").innerText = `${rec.driver.name} (${rec.driver.plate})`;
+        document.getElementById("invDist").innerText = rec.distanceKm + " km";
+        document.getElementById("invSub").innerText = "₹" + preTax;
+        document.getElementById("invTax").innerText = "₹" + tax;
+        document.getElementById("invTotal").innerText = "₹" + total.toFixed(2);
+        document.getElementById("invPickup").innerText = rec.pickup;
+        document.getElementById("invDrop").innerText = rec.dropoff;
+
+        const upiUri = `upi://pay?pa=rydex.cg@upi&pn=Rydex%20Chhattisgarh&tn=${rec.bookingId}&am=${total.toFixed(2)}&cu=INR`;
+        document.getElementById("upiQrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUri)}`;
+
+        document.getElementById("paymentStatusBanner").style.display = rec.paid ? "block" : "none";
+        document.getElementById("upiInvoiceModal").classList.add("open");
+    }
+
+    function simulateUpiPayment() {
+        if (activeBookingRecord) {
+            activeBookingRecord.paid = true;
+            activeBookingRecord.status = "COMPLETED (PAID)";
+            updateHistoryRecord(activeBookingRecord);
+        }
+        document.getElementById("paymentStatusBanner").style.display = "block";
+        document.getElementById("dispatchStatusBadge").innerText = "PAID ✓";
+    }
+
+    // =========================================================================
+    // TRIP CANCELLATION
+    // =========================================================================
+    function openCancelModal() {
+        if (!activeBookingRecord) return;
+        document.getElementById("cancelBookingIdText").innerText = activeBookingRecord.bookingId;
+        document.getElementById("cancelModal").classList.add("open");
+    }
+
+    function confirmRideCancellation() {
+        if (driverAnimationTimer) clearInterval(driverAnimationTimer);
+        if (driverMarker) map.removeLayer(driverMarker);
+        if (driverRouteLine) map.removeLayer(driverRouteLine);
+
+        const reason = document.querySelector('input[name="cancelReason"]:checked').value;
+        if (activeBookingRecord) {
+            activeBookingRecord.status = `CANCELLED (${reason})`;
+            updateHistoryRecord(activeBookingRecord);
+        }
+
+        document.getElementById("active-dispatch-card").style.display = "none";
+        closeModal("cancelModal");
+        showBanner("Ride cancelled & logged to history.", true);
+    }
+
+    // =========================================================================
+    // RIDE HISTORY LEDGER (LOCALSTORAGE)
+    // =========================================================================
+    function getHistoryList() {
+        try {
+            return JSON.parse(localStorage.getItem("rydex_cg_history") || "[]");
+        } catch (e) { return []; }
+    }
+
+    function saveBookingToHistory(rec) {
+        const list = getHistoryList();
+        list.unshift(rec);
+        localStorage.setItem("rydex_cg_history", JSON.stringify(list.slice(0, 25)));
+        updateHistoryBadge();
+    }
+
+    function updateHistoryRecord(updatedRec) {
+        const list = getHistoryList().map(r => r.bookingId === updatedRec.bookingId ? updatedRec : r);
+        localStorage.setItem("rydex_cg_history", JSON.stringify(list));
+        updateHistoryBadge();
+    }
+
+    function updateHistoryBadge() {
+        document.getElementById("historyCountBadge").innerText = getHistoryList().length;
+    }
+
+    function openHistoryModal() {
+        const list = getHistoryList();
+        const container = document.getElementById("historyListContainer");
+
+        if (!list.length) {
+            container.innerHTML = `<div style="padding:28px; text-align:center; color:var(--text-secondary); font-size:13px;">No trips recorded yet. Book or schedule a ride to view telemetry.</div>`;
+        } else {
+            container.innerHTML = "";
+            list.forEach((item, idx) => {
+                const isCancelled = item.status.includes("CANCELLED");
+                const badgeColor = isCancelled ? "#F87171" : (item.status.includes("SCHEDULED") ? "#F59E0B" : "#34D399");
+
+                const card = document.createElement("div");
+                card.style.cssText = "background:var(--surface-card); border:var(--border-luminous); border-radius:14px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:12px;";
+                card.innerHTML = `
+            <div style="font-size:12px; line-height:1.5;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <strong style="color:#fff; font-size:13.5px;">${item.vehicleLabel} • ₹${item.fare}</strong>
+                <span style="font-size:10px; font-weight:800; color:${badgeColor};">${item.status}</span>
+              </div>
+              <div style="color:var(--text-secondary); margin-top:3px;">From: ${item.pickup} → To: ${item.dropoff}</div>
+              <div style="color:#64748b; font-size:11px;">ID: ${item.bookingId} • ${item.timestamp} ${item.scheduledFor ? '• Scheduled: ' + new Date(item.scheduledFor).toLocaleString() : ''}</div>
+            </div>
+            <button class="glass-btn" style="white-space:nowrap;" onclick='viewHistoricalBill(${idx})'>📄 Bill & QR</button>
+          `;
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById("historyModal").classList.add("open");
+    }
+
+    function viewHistoricalBill(index) {
+        const item = getHistoryList()[index];
+        if (item) {
+            closeModal("historyModal");
+            openUpiInvoiceModal(item);
+        }
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove("open");
+    }
+</script>
+</body>
+</html>
