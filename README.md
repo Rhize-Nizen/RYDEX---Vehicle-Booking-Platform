@@ -121,12 +121,8 @@ Rydex emphasizes fundamental computer science concepts within its domain logic:
 ### 3. Spatial Optimization & Nearest-Neighbor Search
 * **Nearest-Captain Linear Scan:** When a ride is booked, the algorithm iterates over the active driver fleet in $O(N)$ time, filtering drivers matching the requested `VehicleType` and minimizing Euclidean coordinate distance:
 
-$$\min_{d \in \text{Fleet}} \left\{ \sqrt{(\text{lat}_d - \text{lat}_p)^2 + (\text{lng}_d - \text{lng}_p)^2} \;\middle|\; d.\text{type} = \text{TargetType} \right\}$$
-
 ### 4. Mathematical Modeling & Spatial Geometry
 * **Haversine Great-Circle Formula:** Evaluates spherical curvature distance between coordinate pairs as an offline fallback model:
-
-$$a = \sin^2\left(\frac{\Delta \phi}{2}\right) + \cos(\phi_1)\cos(\phi_2)\sin^2\left(\frac{\Delta \lambda}{2}\right), \quad d = 2R \cdot \operatorname{atan2}\left(\sqrt{a}, \sqrt{1-a}\right)$$
 
 * **Axis-Aligned Bounding Box (AABB) Geofencing:** Executes constant-time ($O(1)$) spatial clipping:
 
