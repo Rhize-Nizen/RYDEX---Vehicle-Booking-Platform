@@ -13,8 +13,17 @@ public class RydexServer {
     private static final int PORT = 8081;
     private static final VehicleManager vehicleManager = new VehicleManager();
 
-    public static void main(String[] args) throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+   public static void main(String[] args) throws IOException {
+        int port = 8080;
+        String envPort = System.getenv("PORT");
+        if (envPort != null && !envPort.trim().isEmpty()) {
+            try {
+                port = Integer.parseInt(envPort.trim());
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // Bind explicitly to 0.0.0.0 so external cloud traffic can reach it
+        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
 
         server.createContext("/", new StaticFileHandler());
         server.createContext("/api/fares", new FareHandler());
@@ -23,12 +32,10 @@ public class RydexServer {
 
         server.setExecutor(null);
         System.out.println("=================================================");
-        System.out.println(" Rydex Server (Chhattisgarh) running on port: " + PORT);
-        System.out.println(" Open your browser: http://localhost:" + PORT);
+        System.out.println(" Rydex Server running on port: " + port);
         System.out.println("=================================================");
         server.start();
     }
-
     // Serve index.html
     static class StaticFileHandler implements HttpHandler {
         @Override
